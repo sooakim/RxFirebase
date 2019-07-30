@@ -2,6 +2,7 @@ package io.github.sooakim.rxfirebase
 
 import com.google.android.gms.tasks.Task
 import io.reactivex.Completable
+import io.reactivex.Maybe
 import io.reactivex.Single
 
 fun <T> Task<T>.rxSingle(): Single<T> {
@@ -11,6 +12,21 @@ fun <T> Task<T>.rxSingle(): Single<T> {
                 true -> task.result?.let {
                     emitter.onSuccess(it)
                 }
+                false -> task.exception?.let {
+                    emitter.onError(it)
+                }
+            }
+        }
+    }
+}
+
+fun <T> Task<T>.rxMaybe(): Maybe<T> {
+    return Maybe.create { emitter ->
+        this.addOnCompleteListener { task ->
+            when (task.isSuccessful) {
+                true -> task.result?.let {
+                    emitter.onSuccess(it)
+                } ?: emitter.onComplete()
                 false -> task.exception?.let {
                     emitter.onError(it)
                 }
